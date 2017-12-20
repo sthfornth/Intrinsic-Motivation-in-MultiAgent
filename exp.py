@@ -23,7 +23,7 @@ def main():
             team_reward = np.sum(rewards)
             # print(team_reward)
             for i in range(n):
-                agents[i].update(states[i], actions[i], new_states[i], rewards[i] + team_reward)
+                agents[i].update(states[i], actions[i], new_states[i], rewards[i] + team_reward * 0)
             states = new_states
 
     #Testing
@@ -35,6 +35,8 @@ def main():
         scores = np.zeros((n, ))
         while not is_over:
             actions = [agent.get_action(state, False) for agent, state in zip(agents, states)]
+            if _ == 0:
+                print(actions)
             new_states, rewards, is_over = env.step(actions)
             scores += np.array(rewards)
         total_score += scores
