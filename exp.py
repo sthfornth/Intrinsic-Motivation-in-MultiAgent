@@ -14,29 +14,30 @@ def main():
 
     #Training
     train_rounds = 100
-    states = env.reset()
     for _ in range(train_rounds):
-        actions = [agent.get_action(state) for agent, state in zip(agents, states)]
-        new_states, rewards, is_over = env.step(actions)
-        for i in range(n):
-            agents[i].update(states[i], actions[i], new_states[i], rewards[i])
-        if is_over:
-            states = env.reset()
-        else:
+        states = env.reset()
+        is_over = False
+        while not is_over:
+            actions = [agent.get_action(state) for agent, state in zip(agents, states)]
+            new_states, rewards, is_over = env.step(actions)
+            team_reward = np.sum(rewards)
+            # print(team_reward)
+            for i in range(n):
+                agents[i].update(states[i], actions[i], new_states[i], rewards[i] + team_reward)
             states = new_states
 
     #Testing
     test_rounds = 10
-    states = env.reset()
     total_score = np.zeros((n, ))
     for _ in range(test_rounds):
-        actions = [agent.get_action(state, False) for agent, state in zip(agents, states)]
-        states, rewards, is_over = env.step(actions)
-        if is_over:
-            states = env.reset()
-        else:
-            states = new_states
-        total_score += np.array(rewards)
+        states = env.reset()
+        is_over = False
+        scores = np.zeros((n, ))
+        while not is_over:
+            actions = [agent.get_action(state, False) for agent, state in zip(agents, states)]
+            new_states, rewards, is_over = env.step(actions)
+            scores += np.array(rewards)
+        total_score += scores
     avg_score = total_score / test_rounds
     print(avg_score)
 
