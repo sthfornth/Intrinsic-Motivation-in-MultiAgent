@@ -35,8 +35,8 @@ def main():
         scores = np.zeros((n, ))
         while not is_over:
             actions = [agent.get_action(state, False) for agent, state in zip(agents, states)]
-            if _ == 0:
-                print(actions)
+            # if _ == 0:
+            #     print(actions)
             new_states, rewards, is_over = env.step(actions)
             scores += np.array(rewards)
         total_score += scores

@@ -1,3 +1,4 @@
+import copy
 import numpy as np
 
 # class EnvBase():
@@ -14,7 +15,7 @@ class SimpleEnv:
     def reset(self):
         # single state
         self._state = [0, ] * self._nr_agents
-        return self._state
+        return copy.copy(self._state)
 
     def get_action_spaces(self):
         return [2, ] * self._nr_agents
@@ -25,4 +26,4 @@ class SimpleEnv:
         rewards = [self._rewards[i][actions] for i in range(self._nr_agents)]
         for i in range(self._nr_agents):
             self._state[i] += 1
-        return self._state, rewards, self._state[0] >= 3
+        return copy.copy(self._state), rewards, self._state[0] >= 3
