@@ -1,11 +1,20 @@
+import numpy as np
 import numpy.random as random
 
 class QLearningAgent:
-    def __init__(self, alpha, gamma, nr_actions):
+    def __init__(self, id, nr_actions, alpha, gamma, eps=0.1):
+        self._id = id
+        self._nr_actions = nr_actions
         self._alpha = alpha
         self._gamma = gamma
-        self._nr_actions = nr_actions
+        self._eps = eps
         self.Q = dict()
+
+    def adjust(self, lr_beta, eps_beta):
+        # self._alpha *= lr_beta
+        # self._eps *= eps_beta
+        self._alpha = max(0.0, min(1.0, self._alpha + lr_beta))
+        self._eps = max(0.0, min(1.0, self._eps + eps_beta))
 
     def update(self, state, action, next_state, reward):
         if state not in self.Q:
@@ -30,11 +39,13 @@ class QLearningAgent:
         return self.get_Q(state, max_action)
 
     def get_action(self, state, is_train=True):
-        if is_train and random.rand() < 0.1:
+        if is_train and random.rand() < self._eps:
             return random.randint(self._nr_actions)
-        max_action = 0
+        v = self.get_value(state)
+        actions = []
         for action in range(self._nr_actions):
-            if self.get_Q(state, action) > self.get_Q(state, max_action):
-                max_action = action
-        return max_action
+            if self.get_Q(state, action) == v:
+                actions.append(action)
+        # print(self._id, actions, self.get_Q(state, 0), self.get_Q(state, 1))
+        return random.choice(actions)
 
