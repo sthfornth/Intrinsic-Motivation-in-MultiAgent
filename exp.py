@@ -5,21 +5,19 @@ from qlearning import QLearningAgent
 import numpy as np
 
 
-def run(adjust=False, ind_reward_weight=1, avg_reward_weigth=0, verbose=True):
+def run(train_nr_steps, beta=None, ind_reward_weight=1, avg_reward_weigth=0, verbose=False):
     n = 5
     env = AxisEnv(n, 10)
     action_spaces = env.get_action_spaces()
     alpha = 0.1
     gamma = 0.99
     eps = 0.2
-    beta = 0.001
     # beta1, beta2 = 1 - beta, 1 + beta
     agents = [QLearningAgent(i, action_spaces[i], alpha, gamma, eps) for i in range(n)]
 
     #Training
     rounds = 0
     cnt = 0
-    train_nr_steps = 2000
     while cnt < train_nr_steps:
         states = env.reset()
         is_over = False
@@ -35,13 +33,13 @@ def run(adjust=False, ind_reward_weight=1, avg_reward_weigth=0, verbose=True):
                 reward = rewards[i] * ind_reward_weight + avg_reward * avg_reward_weigth
                 agents[i].update(states[i], actions[i], new_states[i], reward)
             states = new_states
-        if adjust:
+        if beta is not None:
             for i in range(n):
                 # print(i, rewards[i], avg_reward)
                 if rewards[i] >= avg_reward:
-                    agents[i].adjust(-beta, -2 * beta)
+                    agents[i].adjust(-beta, -beta)
                 else:
-                    agents[i].adjust(beta, 2 * beta)
+                    agents[i].adjust(beta, beta)
         if verbose:
             str_lr, str_eps = '', ''
             for agent in agents:
@@ -71,23 +69,26 @@ def run(adjust=False, ind_reward_weight=1, avg_reward_weigth=0, verbose=True):
     return avg_score
 
 def main():
-    m = 50
-    st = []
+    n = 2000
+    m = 500
+    st001, st0001, sf, sa = [], [], [], []
     for i in range(m):
-        score = run(adjust=True, verbose=False)
-        print('st', i, np.sum(score), score)
-        st.append(np.sum(score))
-    sf = []
-    for i in range(m):
-        score = run(adjust=False, verbose=False)
+        score = run(n, beta=0.01)
+        print('st001', i, np.sum(score), score)
+        st001.append(np.sum(score))
+        score = run(n, beta=0.001)
+        print('st0001', i, np.sum(score), score)
+        st0001.append(np.sum(score))
+        score = run(n)
         print('sf', i, np.sum(score), score)
         sf.append(np.sum(score))
-    sa = []
-    for i in range(m):
-        score = run(adjust=False, verbose=False, ind_reward_weight=0, avg_reward_weigth=1)
+        score = run(n, ind_reward_weight=0, avg_reward_weigth=1)
         print('sa', i, np.sum(score), score)
         sa.append(np.sum(score))
-    print(np.mean(st), np.std(st), np.min(st), np.max(st))
+
+    # print(np.mean(st), np.std(st), np.min(st), np.max(st))
+    print(np.mean(st001), np.std(st001), np.min(st001), np.max(st001))
+    print(np.mean(st0001), np.std(st0001), np.min(st0001), np.max(st0001))
     print(np.mean(sf), np.std(sf), np.min(sf), np.max(sf))
     print(np.mean(sa), np.std(sa), np.min(sa), np.max(sa))
 
