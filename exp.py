@@ -71,7 +71,7 @@ def run(train_nr_steps, beta=None, ind_reward_weight=1, avg_reward_weigth=0, ver
 def main():
     n = 2000
     m = 500
-    st001, st0001, sf, sa = [], [], [], []
+    st001, st0001, sf, sa, sm = [], [], [], [], []
     for i in range(m):
         score = run(n, beta=0.01)
         print('st001', i, np.sum(score), score)
@@ -85,12 +85,16 @@ def main():
         score = run(n, ind_reward_weight=0, avg_reward_weigth=1)
         print('sa', i, np.sum(score), score)
         sa.append(np.sum(score))
+        score = run(n, ind_reward_weight=0.5, avg_reward_weigth=0.5)
+        print('sm', i, np.sum(score), score)
+        sm.append(np.sum(score))
 
     # print(np.mean(st), np.std(st), np.min(st), np.max(st))
     print(np.mean(st001), np.std(st001), np.min(st001), np.max(st001))
     print(np.mean(st0001), np.std(st0001), np.min(st0001), np.max(st0001))
     print(np.mean(sf), np.std(sf), np.min(sf), np.max(sf))
     print(np.mean(sa), np.std(sa), np.min(sa), np.max(sa))
+    print(np.mean(sm), np.std(sm), np.min(sm), np.max(sm))
 
 if __name__ == "__main__":
     main()
