@@ -6,15 +6,13 @@ import numpy as np
 from numpy import random
 from multiprocessing import Pool
 
-def run(train_nr_steps, beta=None, ind_reward_weight=1, avg_reward_weigth=0, seed=None, verbose=False):
+def run(train_nr_steps, alpha=0.3, beta=None, eps=0.2, ind_reward_weight=1, avg_reward_weigth=0, seed=None, verbose=False):
     if seed is not None:
         random.seed(seed)
     n = 5
     env = AxisEnv(n, 10)
     action_spaces = env.get_action_spaces()
-    alpha = 0.3
     gamma = 0.99
-    eps = 0.2
     # beta1, beta2 = 1 - beta, 1 + beta
     agents = [QLearningAgent(i, action_spaces[i], alpha, gamma, eps) for i in range(n)]
     norm_alpha = True
@@ -84,14 +82,20 @@ def run_wrap(args):
     return run(*args)
 
 def main():
-    n = 10000
-    m = 500
+    alpha = 0.3
+    eps = 0.2
+    n = 2000
+    m = 50
     pool = Pool(12)
+    print('n', n, 'm', m, 'lr', alpha, 'eps', eps)
 
-    def work(n, beta=None, ind_reward_weight=1, avg_reward_weigth=0):
-        args = (n, beta, ind_reward_weight, avg_reward_weigth)
+    def work(n, alpha=alpha, beta=None, eps=eps, ind_reward_weight=1, avg_reward_weigth=0):
+        args = (n, alpha, beta, eps, ind_reward_weight, avg_reward_weigth)
         all_args = [args + (i * i, ) for i in range(m)]
         return list(pool.map(run_wrap, all_args))
+
+    st005 = work(n, beta=0.05)
+    print('st005', np.mean(st005), np.std(st005), np.min(st005), np.max(st005))
 
     st001 = work(n, beta=0.01)
     print('st001', np.mean(st001), np.std(st001), np.min(st001), np.max(st001))
