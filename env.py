@@ -36,7 +36,8 @@ class AxisEnv(EnvBase):
 
     def get_state(self):
         # return list(self._dist)
-        return [self._steps, ] * self._nr_agents
+        # return [self._steps, ] * self._nr_agents
+        return [(self._steps, self._dist[i]) for i in range(self._nr_agents)]
 
     def reset(self):
         self._steps = 0
@@ -55,4 +56,16 @@ class AxisEnv(EnvBase):
         else:
             rewards, is_over = [0, ] * self._nr_agents, False
         state = self.get_state()
-        return state , rewards, is_over
+        return state, rewards, is_over
+
+
+# class FoodEnv(EnvBase):
+#     def __init__(self, nr_agents, nr_rounds):
+#         super().__init__(nr_agents)
+#         self._nr_rounds = nr_rounds
+
+#     def get_state(self):
+#         return self._states
+
+#     def reset(self):
+#         self._state = None
