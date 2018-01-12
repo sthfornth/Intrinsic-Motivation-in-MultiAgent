@@ -60,12 +60,13 @@ class AxisEnv(EnvBase):
 
 
 class FoodEnv(EnvBase):
-    def __init__(self, nr_agents, nr_rounds, nr_foods):
+    def __init__(self, nr_agents, nr_rounds, nr_foods, flag=0):
         super().__init__(nr_agents)
         assert nr_agents == 4 and nr_foods == 4
         self._nr_rounds = nr_rounds
         self._nr_foods = nr_foods
         self._dirs = [(0, 0), (1, 0), (0, 1), (-1, 0), (0, -1)]
+        self._flag = flag
 
     def move(self, pos, action):
         d = self._dirs[action]
@@ -82,8 +83,18 @@ class FoodEnv(EnvBase):
 
     def reset(self):
         self._steps = 0
-        self._foods = [(0, 0), (1, 2), (2, 1), (3, 3)]
-        self._locations = [(0, 3), (1, 1), (2, 2), (3, 0)]
+        if self._flag == 0:
+            self._foods = [(0, 0), (1, 2), (2, 1), (3, 3)]
+            self._locations = [(0, 3), (1, 1), (2, 2), (3, 0)]
+        elif self._flag == 1:
+            self._foods = [(0, 0), (0, 3), (3, 0), (3, 3)]
+            self._locations = [(1, 2), (1, 1), (2, 2), (2, 1)]
+        elif self._flag == 2:
+            self._foods = [(1, 2), (1, 1), (2, 2), (2, 1)]
+            self._locations = [(0, 0), (0, 3), (3, 0), (3, 3)]
+        elif self._flag == 3:
+            self._foods = [(1, 2), (0, 3), (3, 0), (2, 1)]
+            self._locations = [(0, 0), (0, 0), (3, 3), (3, 3)]
         self._scores = [0, 0, 0, 0]
         self._state = (tuple(self._locations), tuple(self._foods))
         return self.get_state()
@@ -117,6 +128,7 @@ class FoodEnv(EnvBase):
                 reward = 1.0 / float(count[loc])
             else:
                 reward = 0
+            self._scores[i] += reward
             rewards.append(reward)
         if len(self._foods) == 0 or self._steps >= self._nr_rounds:
             is_over = True

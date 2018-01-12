@@ -2,18 +2,32 @@
 from env import SimpleEnv, AxisEnv, FoodEnv
 from qlearning import QLearningAgent
 
+import argparse
 import numpy as np
 from numpy import random
 from multiprocessing import Pool
 
-def run(train_nr_steps, alpha=0.3, beta=None, eps=0.2, ind_reward_weight=1, team_reward_weigth=0, seed=None, verbose=False):
+parser = argparse.ArgumentParser()
+parser.add_argument('-lr', '--alpha', default=0.3, type=float, help='learning rate')
+parser.add_argument('-e', '--eps', default=0.2, type=float, help='epsilon greedy')
+parser.add_argument('-n', default=2000, type=int, help='num of updates per agent')
+parser.add_argument('-m', default=50, type=int, help='num of runs')
+parser.add_argument('-env', '--env', default='axis', type=str, help='env name, axis or food[x] for x-th map')
+args = parser.parse_args()
+
+def run(train_nr_steps, beta=None, ind_reward_weight=1, team_reward_weigth=0, seed=None, verbose=False):
     if seed is not None:
         random.seed(seed)
-    # n = 5
-    # env = AxisEnv(n, 10)
-    n = 4
-    env = FoodEnv(n, 4, n)
+    if args.env == 'axis':
+        n = 5
+        env = AxisEnv(n, 10)
+    else:
+        n = 4
+        case = int(args.env[4:])
+        env = FoodEnv(n, 4, n, flag=case)
     action_spaces = env.get_action_spaces()
+    alpha = args.alpha
+    eps = args.eps
     gamma = 0.99
     # beta1, beta2 = 1 - beta, 1 + beta
     agents = [QLearningAgent(i, action_spaces[i], alpha, gamma, eps) for i in range(n)]
@@ -80,41 +94,40 @@ def run(train_nr_steps, alpha=0.3, beta=None, eps=0.2, ind_reward_weight=1, team
     if verbose:
         print(avg_score)
     # return np.sum(avg_score)
-    return sum_team_reward / float(test_rounds)
+    return np.sum(avg_score), sum_team_reward / float(test_rounds)
 
 def run_wrap(args):
     return run(*args)
 
 def main():
-    alpha = 0.3
-    eps = 0.2
-    n = 2000
-    m = 50
+    n = args.n
+    m = args.m
     pool = Pool(12)
-    print('n', n, 'm', m, 'lr', alpha, 'eps', eps)
+    print(args.env, 'n', n, 'm', m, 'lr', args.alpha, 'eps', args.eps)
 
-    def work(n, alpha=alpha, beta=None, eps=eps, ind_reward_weight=1, team_reward_weigth=0):
-        args = (n, alpha, beta, eps, ind_reward_weight, team_reward_weigth)
+    def work(n, beta=None, ind_reward_weight=1, team_reward_weigth=0):
+        args = (n, beta, ind_reward_weight, team_reward_weigth)
         all_args = [args + (i * i, ) for i in range(m)]
         return list(pool.map(run_wrap, all_args))
 
-    st005 = work(n, beta=0.05)
-    print('st005', np.mean(st005), np.std(st005), np.min(st005), np.max(st005))
+    def output(name, s):
+        ind_score = []
+        team_score = []
+        for i in s:
+            ind_score.append(i[0])
+            team_score.append(i[1])
+        s = ind_score
+        print(name + ' ind', np.mean(s), np.std(s), np.min(s), np.max(s))
+        s = team_score
+        print(name + ' team', np.mean(s), np.std(s), np.min(s), np.max(s))
 
-    st001 = work(n, beta=0.01)
-    print('st001', np.mean(st001), np.std(st001), np.min(st001), np.max(st001))
-
-    st0001 = work(n, beta=0.001)
-    print('st0001', np.mean(st0001), np.std(st0001), np.min(st0001), np.max(st0001))
-
-    sf = work(n)
-    print('score individual', np.mean(sf), np.std(sf), np.min(sf), np.max(sf))
-
-    sa = work(n, ind_reward_weight=0, team_reward_weigth=1)
-    print('score team', np.mean(sa), np.std(sa), np.min(sa), np.max(sa))
-
-    # sm = work(n, ind_reward_weight=0.5, team_reward_weigth=0.5)
-    # print(np.mean(sm), np.std(sm), np.min(sm), np.max(sm))
+    output('st005', work(n, beta=0.05))
+    output('st001', work(n, beta=0.01))
+    output('st0001', work(n, beta=0.001))
+    output('st0001 mix', work(n, beta=0.001, ind_reward_weight=0.5, team_reward_weigth=0.5))
+    output('ind score', work(n))
+    output('team score', work(n, ind_reward_weight=0, team_reward_weigth=1))
+    output('mixed score', work(n, ind_reward_weight=0.5, team_reward_weigth=0.5))
 
     pool.close()
     pool.join()
