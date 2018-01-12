@@ -84,14 +84,14 @@ def run_wrap(args):
     return run(*args)
 
 def main():
-    n = 2000
-    m = 50
-    pool = Pool(10)
+    n = 10000
+    m = 500
+    pool = Pool(12)
 
     def work(n, beta=None, ind_reward_weight=1, avg_reward_weigth=0):
         args = (n, beta, ind_reward_weight, avg_reward_weigth)
         all_args = [args + (i * i, ) for i in range(m)]
-        return list(map(run_wrap, all_args))
+        return list(pool.map(run_wrap, all_args))
 
     st001 = work(n, beta=0.01)
     print('st001', np.mean(st001), np.std(st001), np.min(st001), np.max(st001))
