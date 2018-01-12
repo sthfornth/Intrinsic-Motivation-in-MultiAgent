@@ -1,16 +1,18 @@
 
-from env import SimpleEnv, AxisEnv
+from env import SimpleEnv, AxisEnv, FoodEnv
 from qlearning import QLearningAgent
 
 import numpy as np
 from numpy import random
 from multiprocessing import Pool
 
-def run(train_nr_steps, alpha=0.3, beta=None, eps=0.2, ind_reward_weight=1, avg_reward_weigth=0, seed=None, verbose=False):
+def run(train_nr_steps, alpha=0.3, beta=None, eps=0.2, ind_reward_weight=1, team_reward_weigth=0, seed=None, verbose=False):
     if seed is not None:
         random.seed(seed)
-    n = 5
-    env = AxisEnv(n, 10)
+    # n = 5
+    # env = AxisEnv(n, 10)
+    n = 4
+    env = FoodEnv(n, 4, n)
     action_spaces = env.get_action_spaces()
     gamma = 0.99
     # beta1, beta2 = 1 - beta, 1 + beta
@@ -27,18 +29,17 @@ def run(train_nr_steps, alpha=0.3, beta=None, eps=0.2, ind_reward_weight=1, avg_
         while not is_over and cnt <= train_nr_steps:
             actions = [agent.get_action(state) for agent, state in zip(agents, states)]
             cnt += 1
-            new_states, rewards, is_over = env.step(actions)
-            team_reward = np.sum(rewards)
-            avg_reward = float(team_reward) / n
+            new_states, rewards, team_reward, is_over = env.step(actions)
             scores += np.array(rewards)
             for i in range(n):
-                reward = rewards[i] * ind_reward_weight + avg_reward * avg_reward_weigth
+                reward = rewards[i] * ind_reward_weight + team_reward * team_reward_weigth
                 agents[i].update(states[i], actions[i], new_states[i], reward)
             states = new_states
         if beta is not None:
+            avg_scores = np.mean(scores)
             for i in range(n):
-                # print(i, rewards[i], avg_reward)
-                if rewards[i] >= avg_reward:
+                # print(i, scores[i], avg_scores)
+                if scores[i] >= avg_scores:
                     agents[i].adjust(-beta, -beta)
                 else:
                     agents[i].adjust(beta, beta)
@@ -61,22 +62,25 @@ def run(train_nr_steps, alpha=0.3, beta=None, eps=0.2, ind_reward_weight=1, avg_
     #Testing
     test_rounds = 10
     total_score = np.zeros((n, ))
+    sum_team_reward = 0
     for _ in range(test_rounds):
         states = env.reset()
         is_over = False
         scores = np.zeros((n, ))
         while not is_over:
             actions = [agent.get_action(state, False) for agent, state in zip(agents, states)]
-            new_states, rewards, is_over = env.step(actions)
+            new_states, rewards, team_reward, is_over = env.step(actions)
             states = new_states
+            sum_team_reward += team_reward
             scores += np.array(rewards)
         total_score += scores
         if verbose:
             print('Test', _, scores)
-    avg_score = total_score / test_rounds
+    avg_score = total_score / float(test_rounds)
     if verbose:
         print(avg_score)
-    return np.sum(avg_score)
+    # return np.sum(avg_score)
+    return sum_team_reward / float(test_rounds)
 
 def run_wrap(args):
     return run(*args)
@@ -89,8 +93,8 @@ def main():
     pool = Pool(12)
     print('n', n, 'm', m, 'lr', alpha, 'eps', eps)
 
-    def work(n, alpha=alpha, beta=None, eps=eps, ind_reward_weight=1, avg_reward_weigth=0):
-        args = (n, alpha, beta, eps, ind_reward_weight, avg_reward_weigth)
+    def work(n, alpha=alpha, beta=None, eps=eps, ind_reward_weight=1, team_reward_weigth=0):
+        args = (n, alpha, beta, eps, ind_reward_weight, team_reward_weigth)
         all_args = [args + (i * i, ) for i in range(m)]
         return list(pool.map(run_wrap, all_args))
 
@@ -106,10 +110,10 @@ def main():
     sf = work(n)
     print('score individual', np.mean(sf), np.std(sf), np.min(sf), np.max(sf))
 
-    sa = work(n, ind_reward_weight=0, avg_reward_weigth=1)
+    sa = work(n, ind_reward_weight=0, team_reward_weigth=1)
     print('score team', np.mean(sa), np.std(sa), np.min(sa), np.max(sa))
 
-    # sm = work(n, ind_reward_weight=0.5, avg_reward_weigth=0.5)
+    # sm = work(n, ind_reward_weight=0.5, team_reward_weigth=0.5)
     # print(np.mean(sm), np.std(sm), np.min(sm), np.max(sm))
 
     pool.close()
