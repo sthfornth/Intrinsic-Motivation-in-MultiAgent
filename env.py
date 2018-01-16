@@ -76,7 +76,9 @@ class FoodEnv(EnvBase):
         return res
 
     def get_state(self):
-        return [self._state for i in range(self._nr_agents)]
+        # state = (tuple(self._locations), tuple(self._foods))
+        # return [state for i in range(self._nr_agents)]
+        return [(self._locations[i], ) + tuple(self._foods) for i in range(self._nr_agents)]
 
     def get_action_spaces(self):
         return [5, ] * self._nr_agents
@@ -96,7 +98,7 @@ class FoodEnv(EnvBase):
             self._foods = [(1, 2), (0, 3), (3, 0), (2, 1)]
             self._locations = [(0, 0), (0, 0), (3, 3), (3, 3)]
         self._scores = [0, 0, 0, 0]
-        self._state = (tuple(self._locations), tuple(self._foods))
+        # self._state = (tuple(self._locations), tuple(self._foods))
         return self.get_state()
 
     def step(self, actions):
@@ -134,5 +136,5 @@ class FoodEnv(EnvBase):
             is_over = True
         else:
             is_over = False
-        self._state = (tuple(self._locations), tuple(self._foods))
+        #self._state = (tuple(self._locations), tuple(self._foods))
         return self.get_state(), rewards, extra, is_over

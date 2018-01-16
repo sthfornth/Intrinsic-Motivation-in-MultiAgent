@@ -121,6 +121,7 @@ def main():
         s = team_score
         print(name + ' team', np.mean(s), np.std(s), np.min(s), np.max(s))
 
+    # output('st005 mix', work(n, beta=0.05, ind_reward_weight=0.5, team_reward_weigth=0.5))
     output('st005', work(n, beta=0.05))
     output('st001', work(n, beta=0.01))
     output('st0001', work(n, beta=0.001))
